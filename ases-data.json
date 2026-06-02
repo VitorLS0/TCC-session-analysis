@@ -229,21 +229,7 @@
         }
       },
       {
-        "source_file": "2-Censo2022.html",
-        "ases_url": "https://asesweb.governoeletronico.gov.br/exibir-resultado/5b06bc1d32f7403b",
-        "title": "Censo Demográfico 2022",
-        "score": 92.3,
-        "sections": {
-          "marcacao":      { "errors":  2, "warnings": 107 },
-          "comportamento": { "errors":  1, "warnings":   5 },
-          "conteudo":      { "errors": 12, "warnings":   7 },
-          "apresentacao":  { "errors":  0, "warnings":   0 },
-          "multimidia":    { "errors":  0, "warnings":   0 },
-          "formularios":   { "errors":  0, "warnings":   0 }
-        }
-      },
-      {
-        "source_file": "3-ResultadosCenso2022.html",
+        "source_file": "2-ResultadosCenso2022.html",
         "ases_url": "https://asesweb.governoeletronico.gov.br/exibir-resultado/68d931e324b44bb9",
         "title": "Panorama do Censo 2022",
         "score": 90.59,
