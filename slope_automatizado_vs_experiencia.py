@@ -79,12 +79,12 @@ for t in range(1, 6):
     exp_difficulty[t] = np.nanmean([tlx_norm, asq_inv, taxa_falha])
 
 # ============================================================
-# 3) Ranquear (1 = pior, 5 = melhor)
+# 3) Ranquear (1 = melhor, 5 = pior)
 # ============================================================
-# Automatizado: menor auto_score = pior acessibilidade
-auto_ranks = pd.Series(auto_score).rank(ascending=True, method='min').astype(int)
-# Experiência: maior exp_difficulty = pior experiência
-exp_ranks = pd.Series(exp_difficulty).rank(ascending=False, method='min').astype(int)
+# Automatizado: maior auto_score = melhor acessibilidade
+auto_ranks = pd.Series(auto_score).rank(ascending=False, method='min').astype(int)
+# Experiência: menor exp_difficulty = melhor experiência
+exp_ranks = pd.Series(exp_difficulty).rank(ascending=True, method='min').astype(int)
 
 # ============================================================
 # 4) Slope chart
@@ -103,10 +103,10 @@ cores = {
 fig, ax = plt.subplots(figsize=(13, 7.5))
 
 x_esq, x_dir = 0.0, 1.0
-y_pior, y_melhor = 5, 1  # 1 em cima (pior)
+y_melhor, y_pior = 5, 1  # 1 em cima (melhor), 5 embaixo (pior)
 
 for t in range(1, 6):
-    y1 = 6 - auto_ranks[t]   # converte rank em coord y (rank 1 -> y=5 topo)
+    y1 = 6 - auto_ranks[t]   # converte rank em coord y (rank 1 melhor -> y=5 topo)
     y2 = 6 - exp_ranks[t]
     diff = abs(auto_ranks[t] - exp_ranks[t])
 
@@ -156,12 +156,12 @@ ax.text(x_esq, 5.75, 'WAVE + ASES\n(análise automatizada)',
 ax.text(x_dir, 5.75, 'NASA-TLX + ASQ + % falha\n(experiência real)',
         ha='center', va='bottom', fontsize=16, fontweight='bold', color='#111')
 
-# Indicador de direção do ranking
-ax.annotate('', xy=(-0.75, 5.0), xytext=(-0.75, 1.0),
+# Indicador de direção do ranking (1 = melhor no topo, 5 = pior embaixo)
+ax.annotate('', xy=(-0.75, 1.0), xytext=(-0.75, 5.0),
             arrowprops=dict(arrowstyle='->', color='#444', lw=1.6))
-ax.text(-0.78, 5.05, 'pior', ha='right', va='center',
+ax.text(-0.78, 5.05, 'melhor', ha='right', va='center',
         fontsize=12, color='#222', style='italic', fontweight='bold')
-ax.text(-0.78, 0.95, 'melhor', ha='right', va='center',
+ax.text(-0.78, 0.95, 'pior', ha='right', va='center',
         fontsize=12, color='#222', style='italic', fontweight='bold')
 
 # Layout
