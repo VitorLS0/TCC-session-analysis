@@ -61,9 +61,9 @@ cnt = {'experimental': tabela('experimental'), 'controle': tabela('controle')}
 ordem_tarefas = [5, 4, 3, 2, 1]
 
 # Cada tarefa ocupa uma faixa; experimental (cima) e controle (baixo) ENCOSTADOS
-OFF = 0.22
+OFF = 0.11
 BAR_H = 2 * OFF      # = altura -> as duas barras se tocam (sem espaço entre elas)
-fig, ax = plt.subplots(figsize=(13, 7.5))
+fig, ax = plt.subplots(figsize=(13, 5.0))
 for i, t in enumerate(ordem_tarefas):
     for grupo, sinal, tag in (('experimental', +1, 'Experimental'),
                               ('controle', -1, 'Controle')):
@@ -90,19 +90,19 @@ ax.set_xlim(0, 6.6)
 ax.set_xticks(range(0, 6))
 ax.set_xlabel('Número de pessoas (n = 5 por grupo)', size=12, fontweight='bold')
 ax.set_ylim(-0.6, len(ordem_tarefas) - 0.4)
-ax.set_title('Status de conclusão por tarefa — experimental (cima) vs. controle (baixo)\n'
-             '(em número de pessoas; tarefas em ordem T1→T5, de cima para baixo)',
-             size=15, fontweight='bold', pad=15)
 ax.set_axisbelow(True)
 ax.grid(axis='x', linestyle='--', alpha=0.25)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
+# Título e legenda centralizados na FIGURA (não nos eixos, que ficam deslocados)
+fig.suptitle('Status de conclusão por tarefa — Experimental vs. Controle',
+             size=15, fontweight='bold')
 handles = [Patch(facecolor=status_cores[s], label=status_labels[s]) for s in status_ordem]
-ax.legend(handles=handles, loc='lower center', bbox_to_anchor=(0.5, -0.20),
-          ncol=3, frameon=False, fontsize=10)
+fig.legend(handles=handles, loc='lower center', bbox_to_anchor=(0.5, -0.06),
+           ncol=3, frameon=False, fontsize=10)
 
-plt.tight_layout()
+plt.tight_layout(rect=(0, 0.04, 1, 0.96))
 plt.savefig('dificuldade_barras_empilhadas_combinado.png', dpi=300, bbox_inches='tight')
 print('Salvo: dificuldade_barras_empilhadas_combinado.png')
 for g in ('experimental', 'controle'):
