@@ -2,11 +2,15 @@
 """
 G3 — Correspondência teoria × prática (os gráficos mais importantes).
 Gera:
-  g3_conformidade_vs_experiencia.png  (Q3.1)
+  g3_conformidade_vs_experiencia.png  (Q3.1 — painel duplo: conformidade × experiência)
+  g3_correspondencia.png              (Q3.1 — dumbbell: lacuna conformidade → prática por portal)
 
 Cruza a conformidade automática (ASES + WAVE/AIM) com a acessibilidade real do
 usuário de leitor de tela, por portal, evidenciando onde alta conformidade
-coexiste com baixa acessibilidade prática.
+coexiste com baixa acessibilidade prática (convergências e lacunas).
+
+n por medida de experiência: tarefas concluídas n=5/portal; objetivos autônomos
+n=4 (T5 n=3), pois exp05 não tem taxa_conclusao_autonoma registrada.
 
 Duas medidas de experiência são mostradas porque uma sozinha pode mascarar a
 barreira: no Painel, o experimental completa 77% dos OBJETIVOS de forma autônoma,
@@ -177,6 +181,74 @@ fig.text(0.5, 0.02,
 plt.savefig('g3_conformidade_vs_experiencia.png', dpi=300, bbox_inches='tight')
 plt.close(fig)
 print('Salvo: g3_conformidade_vs_experiencia.png')
+
+
+# ==================================================================
+# FIGURA 2 — Lacuna conformidade → prática (dumbbell, 1 linha por portal).
+#   Uma mensagem só: a ferramenta indica ~90/100, mas o leitor de tela
+#   conclui 0–60% das tarefas; o controle (sem def. visual) conclui quase tudo.
+#   Usa só "tarefas concluídas" (n=5 em todos os portais).
+# ==================================================================
+COR_FERR = '#8d99ae'   # conformidade da ferramenta (ASES)
+
+# ordena por lacuna (conformidade − experimental) crescente -> maior no topo
+ordem_gap = sorted(range(1, 6), key=lambda t: ases_score[t] - tarefa_ok[t])
+yy = np.arange(len(ordem_gap))
+
+fig2, ax = plt.subplots(figsize=(12.5, 6.2))
+for y, t in zip(yy, ordem_gap):
+    xf, xe, xc = ases_score[t], tarefa_ok[t], concl_con[t]
+    # haste = lacuna entre o que a ferramenta indica e o que o usuário conclui
+    ax.plot([xe, xf], [y, y], color='#b9536a', lw=4, alpha=0.45,
+            solid_capstyle='round', zorder=2)
+    ax.scatter(xf, y, s=230, color=COR_FERR, edgecolor='black', linewidths=0.8, zorder=4)
+    ax.scatter(xc, y, s=210, marker='D', color=COR_CON, edgecolor='white',
+               linewidths=1.5, zorder=3)
+    ax.scatter(xe, y, s=250, color=COR_EXP, edgecolor='white', linewidths=1.5, zorder=5)
+    # rótulos de valor
+    ax.text(xf + 1.5, y, f'{xf:.0f}', va='center', ha='left',
+            fontsize=11, fontweight='bold', color='#5b6472')
+    ax.text(xe - 1.8, y, f'{xe:.0f}', va='center', ha='right',
+            fontsize=11, fontweight='bold', color=COR_EXP)
+    # lacuna no meio da haste
+    ax.text((xe + xf) / 2, y + 0.22, f'lacuna {xf - xe:.0f}', va='bottom', ha='center',
+            fontsize=9.5, fontweight='bold', color='#7a2233', style='italic')
+
+ax.set_yticks(yy)
+ax.set_yticklabels([nomes_curto[t].replace('\n', ' ') for t in ordem_gap], fontsize=11)
+ax.set_xlim(-6, 112)
+ax.set_xticks(range(0, 101, 20))
+ax.set_ylim(-0.6, len(ordem_gap) - 0.3)
+ax.set_xlabel('Escala 0–100   →   conformidade da ferramenta (ASES) · '
+              '% de tarefas concluídas pelos usuários', fontsize=11.5, fontweight='bold')
+ax.grid(axis='x', linestyle='--', alpha=0.4)
+ax.set_axisbelow(True)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+leg = [Line2D([0], [0], marker='o', color='w', markerfacecolor=COR_FERR,
+              markeredgecolor='black', markersize=14, label='Conformidade ASES (ferramenta)'),
+       Line2D([0], [0], marker='D', color='w', markerfacecolor=COR_CON,
+              markersize=12, label='Controle (sem def. visual) — tarefas concluídas'),
+       Line2D([0], [0], marker='o', color='w', markerfacecolor=COR_EXP,
+              markersize=14, label='Experimental (leitor de tela) — tarefas concluídas'),
+       Line2D([0], [0], color='#b9536a', lw=4, alpha=0.5, label='Lacuna ferramenta → usuário')]
+ax.legend(handles=leg, loc='lower center', bbox_to_anchor=(0.5, -0.30),
+          ncol=2, frameon=False, fontsize=9.5)
+
+fig2.suptitle('G3 · A lacuna entre conformidade e prática, por portal\n'
+              'A ferramenta indica ~90/100 em todos; o leitor de tela conclui 0–60% das tarefas',
+              fontsize=14, fontweight='bold', y=1.0)
+fig2.text(0.5, -0.13,
+          'Conformidade (ASES) e conclusão de tarefas são construtos diferentes, postos na mesma '
+          'escala 0–100 só para evidenciar a lacuna — não é igualdade numérica. WAVE/AIM segue o '
+          'mesmo padrão (todos altos: 5,0–8,6). Tarefas concluídas = % de sucesso completo autônomo '
+          '(n=5 por portal). Leitura descritiva/exploratória — sem correlação/regressão/significância.',
+          ha='center', fontsize=9, color='#444', style='italic', wrap=True)
+plt.tight_layout(rect=(0, 0.05, 1, 1))
+plt.savefig('g3_correspondencia.png', dpi=300, bbox_inches='tight')
+plt.close(fig2)
+print('Salvo: g3_correspondencia.png')
 
 print('\n[G3] ordem por ASES desc:', [nomes_curto[t].split(chr(10))[0] for t in ordem])
 print(f"{'Portal':<14}{'ASES':>6}{'AIM':>6}{'objAut%':>9}{'tarefaOK%':>10}{'ctrlOK%':>9}")

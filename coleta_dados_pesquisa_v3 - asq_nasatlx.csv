@@ -1,4 +1,4 @@
-execucao_id,participante_id,tarefa_num,asq_q1_facil,asq_q2_tempo,asq_q3_nao_perdido,#REF!,asq_q4_leitor_anuncia,asq_q5_nav_eficiente,asq_q6_dificuldade_original,asq_q6_codigos_tematicos,asq_q6_valencia,tlx_demanda_mental,tlx_demanda_fisica,tlx_demanda_temporal,tlx_desempenho,tlx_esforco,tlx_frustracao,tlx_score_medio,fonte_dado,observacoes,flag_revisao
+execucao_id,participante_id,tarefa_num,asq_q1_facil,asq_q2_tempo,asq_q3_nao_perdido,asq_score_medio,asq_q4_leitor_anuncia,asq_q5_nav_eficiente,asq_q6_dificuldade_original,asq_q6_codigos_tematicos,asq_q6_valencia,tlx_demanda_mental,tlx_demanda_fisica,tlx_demanda_temporal,tlx_desempenho,tlx_esforco,tlx_frustracao,tlx_score_medio,fonte_dado,observacoes,flag_revisao
 exp01_T1,exp01,1,2,2,1,"1,666666667",4,4,,,,12,12,0,0,12,0,6,,,
 exp01_T2,exp01,2,1,1,1,1,1,1,,,,20,17,0,20,20,20,"16,16666667",,,
 exp01_T3,exp01,3,5,5,4,"4,666666667",7,7,,,,12,10,0,1,15,0,"6,333333333",,,

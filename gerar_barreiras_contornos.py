@@ -20,7 +20,7 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch, Rectangle
+from matplotlib.patches import Patch
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')   # console Windows aceita ≤, ç, etc.
@@ -187,64 +187,76 @@ print('Salvo: g_eficacia_contornos.png')
 
 
 # ==================================================================
-# GRÁFICO 3 — Matriz: barreira × detecção automática (+ severidade)
+# GRÁFICO 3 — Severidade × detectabilidade (barras 100% empilhadas)
+# Relação agregada: quanto mais grave a barreira, menos a ferramenta detecta.
 # ==================================================================
-ordem3 = barr.sort_values(['criticidade', 'ID'], ascending=[False, True]).index.tolist()
-y3 = np.arange(len(ordem3))[::-1]
-# escala de cor da criticidade (mais escuro = mais grave)
-crit_cor = {2: '#fee08b', 3: '#fc8d59', 4: '#b30000'}
+sev_info = [(4, 'Catastrófica'), (3, 'Maior'), (2, 'Menor')]   # mais grave → menos grave
+det_classes = ['Detectável', 'Parcial', 'Não detectável']
 
-fig, ax = plt.subplots(figsize=(12, 7))
-x_sev, x_det = 0.0, 1.05
-cw = 0.92
-for yi, bid in zip(y3, ordem3):
-    crit = barr.loc[bid, 'criticidade']
-    det = deteccao[bid]
-    # célula severidade
-    ax.add_patch(Rectangle((x_sev - cw / 2, yi - 0.42), cw, 0.84,
-                           facecolor=crit_cor[crit], edgecolor='white', lw=2, zorder=2))
-    ax.text(x_sev, yi, f'{barr.loc[bid, "rotulo_sev"]}\n({crit})', ha='center', va='center',
-            fontsize=9.5, fontweight='bold', color='white' if crit == 4 else '#333')
-    # célula detecção
-    ax.add_patch(Rectangle((x_det - cw / 2, yi - 0.42), cw, 0.84,
-                           facecolor=det_cor[det], edgecolor='white', lw=2, zorder=2))
-    ax.text(x_det, yi, det, ha='center', va='center', fontsize=10,
-            fontweight='bold', color='white')
+# contagem severidade × detecção (recalculada do CSV)
+cont = {crit: {d: 0 for d in det_classes} for crit, _ in sev_info}
+for bid in barr.index:
+    cont[barr.loc[bid, 'criticidade']][deteccao[bid]] += 1
+totais = {crit: sum(cont[crit].values()) for crit, _ in sev_info}
 
-ax.set_xlim(-0.7, 1.75)
-ax.set_ylim(-0.7, len(ordem3) - 0.3)
-ax.set_yticks(y3)
-ax.set_yticklabels([f'{bid}: {nome_curto[bid]}' for bid in ordem3], fontsize=11)
-ax.set_xticks([x_sev, x_det])
-ax.set_xticklabels(['Severidade\n(criticidade)', 'Detecção por\nASES / WAVE'],
+fig, ax = plt.subplots(figsize=(12, 5.6))
+ypos = list(range(len(sev_info)))[::-1]          # Catastrófica no topo
+for (crit, rot), yp in zip(sev_info, ypos):
+    n = totais[crit]
+    esquerda = 0.0
+    for d in det_classes:
+        c = cont[crit][d]
+        pct = 100 * c / n
+        ax.barh(yp, pct, left=esquerda, color=det_cor[d], edgecolor='white',
+                linewidth=1.2, zorder=2, hatch='//' if n == 1 else None)
+        if c > 0:
+            ax.text(esquerda + pct / 2, yp, f'{c} de {n}\n{pct:.0f}%',
+                    ha='center', va='center', fontsize=11.5, fontweight='bold',
+                    color='white')
+        esquerda += pct
+    # n do nível à direita (+ ressalva p/ n=1)
+    if n == 1:
+        ax.text(102, yp, 'n=1  ⚠ uma única barreira — não generalizar',
+                ha='left', va='center', fontsize=10.5, color='#a00000', fontweight='bold')
+    else:
+        ax.text(102, yp, f'n={n}', ha='left', va='center', fontsize=11, color='dimgray')
+
+ax.set_yticks(ypos)
+ax.set_yticklabels([f'{rot}\n(crit. {crit})' for crit, rot in sev_info],
                    fontsize=12, fontweight='bold')
-ax.xaxis.set_ticks_position('top')
-ax.tick_params(axis='x', length=0)
+ax.set_xlim(0, 118)
+ax.set_xticks(range(0, 101, 20))
+ax.set_xticklabels([f'{v}%' for v in range(0, 101, 20)])
+ax.set_xlabel('Proporção das barreiras do nível detectadas pelas ferramentas (ASES/WAVE)',
+              fontsize=12, fontweight='bold')
+ax.set_title('Quanto mais grave a barreira, menos as ferramentas automáticas a detectam\n'
+             'Severidade × detectabilidade — as ferramentas cobrem o leve e falham no grave',
+             fontsize=13.5, fontweight='bold', pad=12)
+ax.grid(axis='x', linestyle='--', alpha=0.4)
+ax.set_axisbelow(True)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 ax.tick_params(axis='y', length=0)
-for spine in ax.spines.values():
-    spine.set_visible(False)
 
-# Destaque da mensagem central
-n_cat = int((barr['criticidade'] == 4).sum())
-n_cat_nd = sum(1 for b in ordem3 if barr.loc[b, 'criticidade'] == 4 and deteccao[b] == 'Não detectável')
-n_cat_p = sum(1 for b in ordem3 if barr.loc[b, 'criticidade'] == 4 and deteccao[b] == 'Parcial')
-ax.set_title('As barreiras mais graves escapam das ferramentas automáticas\n'
-             f'Das {n_cat} barreiras catastróficas, NENHUMA é plenamente detectável '
-             f'({n_cat_nd} não detectáveis, {n_cat_p} parciais)',
-             fontsize=13.5, fontweight='bold', pad=18)
-# Legenda de detecção
-handles = [Patch(facecolor=det_cor[k], label=k) for k in ['Detectável', 'Parcial', 'Não detectável']]
-ax.legend(handles=handles, title='Detecção automática', loc='center left',
-          bbox_to_anchor=(1.0, 0.5), fontsize=10, title_fontsize=10, framealpha=0.95)
-fig.text(0.5, 0.005,
-         'Classificação de detecção = julgamento técnico do autor: ferramentas estáticas (ASES/WAVE) '
-         'acham falhas no HTML/DOM, mas não executam interação, não leem conteúdo dinâmico/embarcado '
-         'nem julgam o sentido de rótulos. Linhas ordenadas da mais à menos grave.',
-         ha='center', fontsize=9, color='#444', style='italic')
+# Legenda com direção explícita
+handles = [
+    Patch(facecolor=det_cor['Detectável'], label='Detectável — a ferramenta cobre'),
+    Patch(facecolor=det_cor['Parcial'], label='Parcial — cobre em parte'),
+    Patch(facecolor=det_cor['Não detectável'], label='Não detectável — escapa à ferramenta'),
+]
+ax.legend(handles=handles, title='Detecção por ASES/WAVE', loc='lower center',
+          bbox_to_anchor=(0.5, -0.30), ncol=3, frameon=False,
+          fontsize=10, title_fontsize=10)
+fig.text(0.5, -0.05,
+         'n=9 barreiras; severidade (Nielsen adaptada) e detecção inferidas dos relatos — julgamento '
+         'qualitativo/técnico, leitura descritiva. Ferramentas estáticas acham falhas no HTML/DOM, mas '
+         'não executam interação, não leem conteúdo dinâmico/embarcado nem julgam o sentido de rótulos. '
+         'A faixa "Maior" tem só 1 barreira (hachurada) — não generalizar.',
+         ha='center', fontsize=8.8, color='#444', style='italic')
 plt.tight_layout()
-plt.savefig('g3_matriz_deteccao_vs_severidade.png', dpi=300, bbox_inches='tight')
+plt.savefig('g3_severidade_vs_detectabilidade.png', dpi=300, bbox_inches='tight')
 plt.close(fig)
-print('Salvo: g3_matriz_deteccao_vs_severidade.png')
+print('Salvo: g3_severidade_vs_detectabilidade.png')
 
 
 # ==================================================================

@@ -160,8 +160,10 @@ print('Salvo: g2_conclusao_controle_vs_experimental.png')
 # Função genérica de dumbbell (GAP destacado) para ASQ e TLX
 # ==================================================================
 def dumbbell(con, exp, escala_txt, xlim, titulo, arquivo, melhor_dir,
-             nota=None, xticks=None):
-    """melhor_dir: 'maior' (ASQ) ou 'menor' (TLX)."""
+             nota=None, xticks=None, folga_gap_baixo=False):
+    """melhor_dir: 'maior' (ASQ) ou 'menor' (TLX).
+    folga_gap_baixo: estende o eixo Y p/ baixo só o suficiente p/ o rótulo
+    'GAP' da linha mais baixa não ficar cortado (legenda segue fora)."""
     # Ordena por magnitude do gap (maior em cima)
     ordem = sorted(tarefas, key=lambda t: abs(con[t] - exp[t]))
     y = np.arange(len(ordem))
@@ -205,8 +207,11 @@ def dumbbell(con, exp, escala_txt, xlim, titulo, arquivo, melhor_dir,
         Line2D([0], [0], marker='o', color='w', markerfacecolor=COR_EXP,
                markersize=13, label='Experimental (leitor de tela)'),
         Line2D([0], [0], color=COR_GAP, lw=3, alpha=0.5,
-               label='GAP = barreira de acessibilidade'),
+               label='GAP = diferença entre controle e experimental'),
     ]
+    if folga_gap_baixo:
+        # só uma folga abaixo da linha mais baixa p/ o rótulo 'GAP' não cortar
+        ax.set_ylim(-0.7, len(ordem) - 1 + 0.55)
     ax.legend(handles=legend_el, loc='lower center', bbox_to_anchor=(0.5, -0.24),
               ncol=3, frameon=False, fontsize=10)
     if nota:
@@ -222,8 +227,7 @@ dumbbell(
     asq_con, asq_exp,
     escala_txt='ASQ adaptado (1–7)   ↑ melhor (concorda com afirmações positivas)',
     xlim=(1, 7.4), xticks=range(1, 8),
-    titulo='G2 · Facilidade percebida (ASQ adaptado) — controle vs. experimental\n'
-           'GAP = quanto a barreira de acessibilidade reduz a facilidade percebida',
+    titulo='G2 · Facilidade percebida (ASQ adaptado) — controle vs. experimental',
     arquivo='g2_gap_asq.png', melhor_dir='maior',
     nota='ASQ adaptado = média de Q1–Q3 (excluindo NA), para ambos os grupos. '
          'Q4/Q5 (leitor de tela) não entram no score. No Painel e no Mapa o próprio '
@@ -235,9 +239,8 @@ dumbbell(
     tlx_con, tlx_exp,
     escala_txt='NASA-TLX (0–20)   ↑ pior (maior = mais carga/esforço)',
     xlim=(0, 20), xticks=range(0, 21, 2),
-    titulo='G2 · Carga de trabalho (NASA-TLX) — controle vs. experimental\n'
-           'GAP = sobrecarga imposta pela barreira de acessibilidade',
-    arquivo='g2_gap_tlx.png', melhor_dir='menor',
+    titulo='G2 · Carga de trabalho (NASA-TLX) — controle vs. experimental\n',
+    arquivo='g2_gap_tlx.png', melhor_dir='menor', folga_gap_baixo=True,
     nota='NASA-TLX = média das 6 dimensões (recalculada igualmente p/ os dois grupos). '
          f'T5/Mapa: experimental n={n_exp.get(5, 0)} (2 execuções não realizadas).')
 
