@@ -21,11 +21,11 @@ from matplotlib.lines import Line2D
 # Constantes compartilhadas (mesmo padrão dos scripts já existentes)
 # ------------------------------------------------------------------
 nomes_tarefas = {
-    1: 'T1: Consulta CPF\n(Receita)',
-    2: 'T2: Painel de\nMonitoramento',
-    3: 'T3: Receita Federal\n(Unidades)',
-    4: 'T4: Censo\n(IBGE)',
-    5: 'T5: Mapa de\nEmpresas',
+    1: 'T1: Consulta CPF',
+    2: 'T2: Painel de Monitoramento',
+    3: 'T3: Receita Federal',
+    4: 'T4: IBGE Censo',
+    5: 'T5: Mapa de Empresas',
 }
 cores_tarefa = {1: '#ff7f0e', 2: '#2ca02c', 3: '#d62728', 4: '#9467bd', 5: '#8c564b'}
 
@@ -97,7 +97,8 @@ axA.set_title('ASES — conformidade e-MAG/WCAG\n(média das páginas avaliadas)
               fontsize=13, fontweight='bold', pad=10)
 axA.grid(axis='y', linestyle='--', alpha=0.4)
 axA.set_axisbelow(True)
-axA.tick_params(axis='x', labelsize=9)
+axA.set_xticks(range(len(labels)))
+axA.set_xticklabels(labels, rotation=15, ha='right', fontsize=9)
 
 # -- WAVE/AIM (0-10) --
 vals_aim = [wave_aim[t] for t in tarefas]
@@ -114,7 +115,8 @@ axB.set_title('WAVE — índice AIM\n(média das páginas avaliadas)',
               fontsize=13, fontweight='bold', pad=10)
 axB.grid(axis='y', linestyle='--', alpha=0.4)
 axB.set_axisbelow(True)
-axB.tick_params(axis='x', labelsize=9)
+axB.set_xticks(range(len(labels)))
+axB.set_xticklabels(labels, rotation=15, ha='right', fontsize=9)
 
 fig.suptitle('G1 · Grau de conformidade automática por portal (ASES e WAVE/AIM)',
              fontsize=15, fontweight='bold', y=1.02)
@@ -151,7 +153,8 @@ def barras_paginas(ax, pages_por_tarefa, media_por_tarefa, ymax, ylabel, titulo,
         ax.text(xc + meia + 0.03, media_por_tarefa[t], fmt.format(media_por_tarefa[t]),
                 ha='left', va='center', fontsize=12, fontweight='bold', color='black')
     ax.set_xticks(xpos)
-    ax.set_xticklabels([nomes_tarefas[t] for t in tarefas], fontsize=11.5)
+    ax.set_xticklabels([nomes_tarefas[t] for t in tarefas], rotation=15, ha='right',
+                       fontsize=10.5)
     ax.set_xlim(-0.5, xpos[-1] + 0.5)
     ax.set_ylim(0, ymax)
     ax.set_ylabel(ylabel, fontsize=12.5, fontweight='bold')
@@ -165,16 +168,16 @@ def barras_paginas(ax, pages_por_tarefa, media_por_tarefa, ymax, ylabel, titulo,
 
 fig, (axA, axB) = plt.subplots(1, 2, figsize=(15, 6))
 barras_paginas(axA, ases_pages, ases_score, 100,
-               'Score ASES (0–100)   ↑ melhor', 'ASES — pontuação por página', '{:.1f}')
+               'Score ASES (0–100)', 'ASES — pontuação por página', '{:.1f}')
 barras_paginas(axB, wave_aim_pages, wave_aim, 10,
-               'WAVE — índice AIM (0–10)   ↑ melhor', 'WAVE/AIM — pontuação por página', '{:.1f}')
+               'WAVE — índice AIM (0–10)', 'WAVE/AIM — pontuação por página', '{:.1f}')
 
-leg = [Patch(facecolor='#9aa0a6', edgecolor='white', label='Cada barra = uma página avaliada'),
+leg = [Patch(facecolor='#9aa0a6', edgecolor='white', label='Barra única = Página avaliada'),
        Line2D([0], [0], color='black', lw=1.8, linestyle='--', label='Média do portal')]
 fig.legend(handles=leg, loc='lower center', bbox_to_anchor=(0.5, -0.02),
            ncol=2, frameon=False, fontsize=11)
 
-fig.suptitle('G1 · Conformidade automática por página, com a média de cada portal',
+fig.suptitle('Conformidade Automática por Página e Média — ASES e WAVE',
              fontsize=15, fontweight='bold', y=1.0)
 plt.tight_layout(rect=(0, 0.04, 1, 1))
 plt.savefig('g1_ases_aim_por_pagina.png', dpi=300, bbox_inches='tight')

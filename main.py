@@ -121,7 +121,7 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
                handler_map={tuple: HandlerTuple(ndivide=None)},
                loc='center', bbox_to_anchor=(0.83, 0.27), fontsize=12)
     fig.text(0.83, 0.13,
-             'NASA-TLX: 0–20 por dimensão · maior = mais carga',
+             'NASA-TLX: 0–20 por dimensão · maior = mais carga (pior)',
              ha='center', fontsize=10.5, color='#444', style='italic')
 
     plt.savefig(arquivo, dpi=300, bbox_inches='tight')
