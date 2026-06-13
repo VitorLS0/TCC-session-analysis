@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerTuple
 
 # Carregar os dados
 df = pd.read_csv("coleta_dados_pesquisa_v3 - asq_nasatlx.csv")
@@ -47,9 +49,12 @@ angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
 angles += angles[:1]
 
 
-def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo):
-    """Gera a grade 2x3 de radares NASA-TLX para um único grupo."""
-    # Média geral do grupo (referência de fundo)
+def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
+                      ref_por_tarefa=None, ref_nome=None):
+    """Gera a grade 2x3 de radares NASA-TLX para um único grupo.
+    ref_por_tarefa: dict {tarefa: vetor de referência} a usar como fundo cinza
+    (ex.: média do controle por tarefa). Se None, usa a média geral do grupo."""
+    # Média geral do grupo (referência de fundo padrão)
     overall_mean = df_grupo[tlx_cols].mean().values
     overall_mean = np.append(overall_mean, overall_mean[0])
 
@@ -77,15 +82,20 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo):
         ax.tick_params(axis='y', labelsize=12)
         ax.set_ylim(0, TLX_MAX)
 
-        # Média geral do grupo como referência (fundo cinza)
-        ax.plot(angles, overall_mean, linewidth=1, linestyle='solid',
-                color='gray', alpha=0.5)
-        ax.fill(angles, overall_mean, color='gray', alpha=0.1,
-                label=f'Média geral ({grupo_nome.lower()})')
+        # Referência de fundo (cinza): controle por tarefa, ou média geral do grupo
+        if ref_por_tarefa is not None:
+            ref = ref_por_tarefa[tarefa_num]
+            ref_label = ref_nome
+        else:
+            ref = overall_mean
+            ref_label = f'Média geral ({grupo_nome.lower()})'
+        ax.plot(angles, ref, linewidth=2.2, linestyle='solid',
+                color='#4d4d4d', alpha=0.85, zorder=3)
+        ax.fill(angles, ref, color='gray', alpha=0.18, label=ref_label, zorder=1)
 
         # Tarefa específica
         ax.plot(angles, t_mean, linewidth=2, linestyle='solid',
-                color=cores[i], label='Média da tarefa')
+                color=cores[i], label='Experimental')
         ax.fill(angles, t_mean, color=cores[i], alpha=0.2)
 
         ax.set_title(f'{nomes_tarefas[tarefa_num]}  (n={n})',
@@ -94,16 +104,22 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo):
     # Ocultar o 6º gráfico (só 5 tarefas)
     fig.delaxes(axes[5])
 
+    vs_txt = f'vs. {ref_nome.lower()}' if ref_por_tarefa is not None else 'vs. média do grupo'
     plt.suptitle(
-        f'NASA-TLX por Tarefa — Grupo {grupo_nome} (vs. média do grupo)',
+        f'NASA-TLX Média por Tarefa — Grupo {grupo_nome} vs Controle',
         size=18, fontweight='bold', y=1.05)
     plt.tight_layout()
     fig.subplots_adjust(hspace=0.45)
 
-    # Legenda no espaço vazio do 6º subplot
-    handles, labels_leg = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels_leg, loc='center',
-               bbox_to_anchor=(0.83, 0.27), fontsize=13)
+    # Legenda no espaço vazio do 6º subplot: cores = grupo da figura; cinza = referência
+    ref_label_geral = ref_nome if ref_por_tarefa is not None \
+        else f'Média geral ({grupo_nome.lower()})'
+    exp_handle = tuple(Line2D([0], [0], color=cores[i], lw=2.4) for i in range(5))
+    ref_handle = Line2D([0], [0], color='#4d4d4d', lw=2.2)
+    fig.legend([exp_handle, ref_handle],
+               [f'{grupo_nome} (linhas coloridas)', ref_label_geral],
+               handler_map={tuple: HandlerTuple(ndivide=None)},
+               loc='center', bbox_to_anchor=(0.83, 0.27), fontsize=12)
     fig.text(0.83, 0.13,
              'NASA-TLX: 0–20 por dimensão · maior = mais carga',
              ha='center', fontsize=10.5, color='#444', style='italic')
@@ -113,9 +129,18 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo):
     print(f'Salvo: {arquivo}')
 
 
-# Uma figura por grupo
+# Média do controle por tarefa (referência do radar experimental)
+df_con = df[df['grupo'] == 'con']
+ref_controle = {}
+for t in range(1, 6):
+    m = df_con[df_con['tarefa_num'] == t][tlx_cols].mean().values
+    ref_controle[t] = np.append(m, m[0])
+
+# Experimental: cada tarefa comparada à média do CONTROLE naquela tarefa
 gerar_radar_grupo(df[df['grupo'] == 'exp'], 'exp', 'Experimental',
-                  'radar_tlx_experimental.png')
+                  'radar_tlx_experimental.png',
+                  ref_por_tarefa=ref_controle, ref_nome='Controle')
+# Controle: mantém a comparação vs. média do próprio grupo
 gerar_radar_grupo(df[df['grupo'] == 'con'], 'con', 'Controle',
                   'radar_tlx_controle.png')
 
