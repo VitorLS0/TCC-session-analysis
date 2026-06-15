@@ -47,10 +47,8 @@ for i in range(5):
     ax = axes[i]
     sub = df[df['tarefa_num'] == t]
 
-    ns = {}
     for j, g in enumerate(['exp', 'con']):
         sg = sub[sub['grupo'] == g]
-        ns[g] = int(sg['asq_medio'].notna().sum())
         vals = [sg['asq_q1_facil'].mean(), sg['asq_q2_tempo'].mean(),
                 sg['asq_q3_nao_perdido'].mean(), sg['asq_medio'].mean()]
         offset = (j - 0.5) * width
@@ -62,17 +60,16 @@ for i in range(5):
         for b, v in zip(bars, vals):
             if not np.isnan(v):
                 ax.text(b.get_x() + b.get_width() / 2, v + 0.12, f'{v:.1f}',
-                        ha='center', va='bottom', fontsize=9.5,
+                        ha='center', va='bottom', fontsize=14,
                         fontweight='bold', color=cor_grupo[g])
 
     ax.axhline(4, color='gray', linestyle=':', linewidth=1, zorder=1)  # ponto médio da escala
     ax.set_ylim(1, 7.6)
     ax.set_yticks(range(1, 8))
     ax.set_xticks(xpos)
-    ax.set_xticklabels(cats, fontsize=11)
-    ax.set_ylabel('ASQ (1–7)  ↑ melhor', fontsize=11)
-    ax.set_title(f'{nomes_tarefas[t]}   (exp n={ns["exp"]} · con n={ns["con"]})',
-                 fontsize=13, fontweight='bold', pad=8)
+    ax.set_xticklabels(cats, fontsize=14)
+    ax.set_ylabel('ASQ (1–7)', fontsize=14)
+    ax.set_title(nomes_tarefas[t], fontsize=13, fontweight='bold', pad=8)
     ax.grid(axis='y', linestyle='--', alpha=0.35, zorder=0)
     ax.set_axisbelow(True)
     ax.spines['top'].set_visible(False)
@@ -86,11 +83,12 @@ leg_handles = [Patch(facecolor=cor_grupo['exp'], edgecolor='black', label='Exper
 fig.legend(handles=leg_handles, loc='center', bbox_to_anchor=(0.83, 0.27),
            fontsize=13, frameon=True)
 fig.text(0.83, 0.13,
-         'ASQ = média das questões Q1–Q3 (1–7, maior = melhor).\n'
-         'n = execuções por grupo; T5 experimental tem n=3.',
-         ha='center', fontsize=10, color='#444', style='italic')
+         'ASQ: 1-7 - maior = maior concordância (melhor).\n\n'
+         'n = 5 por grupo em todas as tarefas,\n' 
+         'exceto T5 do experimental (n = 3).',
+         ha='center', fontsize=14, color='#444', style='italic')
 
-plt.suptitle('ASQ por Tarefa — Experimental vs Controle (Q1–Q3 e média)',
+plt.suptitle('ASQ Média por Tarefa — Experimental vs Controle',
              size=18, fontweight='bold', y=1.02)
 plt.tight_layout()
 fig.subplots_adjust(hspace=0.4)

@@ -7,26 +7,20 @@ from matplotlib.legend_handler import HandlerTuple
 # Carregar os dados
 df = pd.read_csv("coleta_dados_pesquisa_v3 - asq_nasatlx.csv")
 
-# Selecionar as colunas do NASA-TLX
-tlx_cols = [
-    'tlx_demanda_mental', 'tlx_demanda_fisica',
-    'tlx_demanda_temporal', 'tlx_desempenho',
-    'tlx_esforco', 'tlx_frustracao'
-]
+# Questões do ASQ que entram no radar (1-7, maior = melhor)
+asq_cols = ['asq_q1_facil', 'asq_q2_tempo', 'asq_q3_nao_perdido']
 
 # Rótulos para o gráfico
-labels = [
-    'Demanda\nMental', 'Demanda\nFísica', 'Demanda\nTemporal',
-    'Desempenho', 'Esforço', 'Frustração'
-]
+labels = ['Q1\nFácil', 'Q2\nTempo', 'Q3\nNão perdido']
 
 # Garantir que os dados são numéricos
-for col in tlx_cols:
+for col in asq_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
 
 # Grupo derivado do prefixo de participante_id (exp = experimental, con = controle)
 df = df[df['participante_id'].notna()].copy()
 df['grupo'] = df['participante_id'].str.slice(0, 3)
+df['tarefa_num'] = pd.to_numeric(df['tarefa_num'], errors='coerce')
 
 # Nomes das tarefas
 nomes_tarefas = {
@@ -40,8 +34,8 @@ nomes_tarefas = {
 # Cores por tarefa (identidade de cada subplot)
 cores = ['#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
 
-# Escala fixa para o TLX (0-20, maior = pior) -> as duas figuras ficam comparáveis
-TLX_MAX = 20
+# Escala fixa para o ASQ (1-7, maior = melhor) -> as duas figuras ficam comparáveis
+ASQ_MIN, ASQ_MAX = 1, 7
 
 # Ângulos do radar
 num_vars = len(labels)
@@ -51,11 +45,11 @@ angles += angles[:1]
 
 def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
                       ref_por_tarefa=None, ref_nome=None):
-    """Gera a grade 2x3 de radares NASA-TLX para um único grupo.
+    """Gera a grade 2x3 de radares ASQ para um único grupo.
     ref_por_tarefa: dict {tarefa: vetor de referência} a usar como fundo cinza
     (ex.: média do controle por tarefa). Se None, usa a média geral do grupo."""
     # Média geral do grupo (referência de fundo padrão)
-    overall_mean = df_grupo[tlx_cols].mean().values
+    overall_mean = df_grupo[asq_cols].mean().values
     overall_mean = np.append(overall_mean, overall_mean[0])
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 10), subplot_kw=dict(polar=True))
@@ -65,7 +59,7 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
         tarefa_num = i + 1
         ax = axes[i]
 
-        sub = df_grupo[df_grupo['tarefa_num'] == tarefa_num][tlx_cols]
+        sub = df_grupo[df_grupo['tarefa_num'] == tarefa_num][asq_cols]
         t_mean = sub.mean().values
 
         if np.isnan(t_mean).all():
@@ -77,9 +71,10 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
         ax.set_theta_offset(np.pi / 2)
         ax.set_theta_direction(-1)
         ax.set_xticks(angles[:-1])
-        ax.set_xticklabels(labels, size=16)
-        ax.tick_params(axis='y', labelsize=12)
-        ax.set_ylim(0, TLX_MAX)
+        ax.set_xticklabels(labels, size=15)
+        ax.set_yticks([1, 3, 5, 7])
+        ax.tick_params(axis='y', labelsize=11)
+        ax.set_ylim(ASQ_MIN, ASQ_MAX)
 
         # Referência de fundo (cinza): controle por tarefa, ou média geral do grupo
         if ref_por_tarefa is not None:
@@ -104,7 +99,7 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
     fig.delaxes(axes[5])
 
     plt.suptitle(
-        f'NASA-TLX Média por Tarefa — {grupo_nome} vs Controle',
+        f'ASQ Média por Tarefa — {grupo_nome} vs Controle',
         size=18, fontweight='bold', y=1.05)
     plt.tight_layout()
     fig.subplots_adjust(hspace=0.45)
@@ -117,12 +112,11 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
     fig.legend([exp_handle, ref_handle],
                [f'{grupo_nome} (linhas coloridas)', ref_label_geral],
                handler_map={tuple: HandlerTuple(ndivide=None)},
-               loc='center', bbox_to_anchor=(0.83, 0.27), fontsize=14)
+               loc='center', bbox_to_anchor=(0.83, 0.27), fontsize=12)
     fig.text(0.83, 0.13,
-             '\n NASA-TLX: 0–20 por dimensão · maior = pior.\n\n'
-             'n = 5 por grupo em todas as tarefas,\n' 
-             'exceto T5 do experimental (n = 3).',
-             ha='center', fontsize=16, color='#444', style='italic')
+             'ASQ: 1–7 por questão · maior = melhor (concorda com a afirmação).\n'
+             'n = 5 por grupo em todas as tarefas, exceto T5 do experimental (n = 3).',
+             ha='center', fontsize=10.5, color='#444', style='italic')
 
     plt.savefig(arquivo, dpi=300, bbox_inches='tight')
     plt.close(fig)
@@ -133,15 +127,15 @@ def gerar_radar_grupo(df_grupo, grupo_key, grupo_nome, arquivo,
 df_con = df[df['grupo'] == 'con']
 ref_controle = {}
 for t in range(1, 6):
-    m = df_con[df_con['tarefa_num'] == t][tlx_cols].mean().values
+    m = df_con[df_con['tarefa_num'] == t][asq_cols].mean().values
     ref_controle[t] = np.append(m, m[0])
 
 # Experimental: cada tarefa comparada à média do CONTROLE naquela tarefa
 gerar_radar_grupo(df[df['grupo'] == 'exp'], 'exp', 'Experimental',
-                  'radar_tlx_experimental.png',
+                  'asq_radar_experimental.png',
                   ref_por_tarefa=ref_controle, ref_nome='Controle')
 # Controle: mantém a comparação vs. média do próprio grupo
 gerar_radar_grupo(df[df['grupo'] == 'con'], 'con', 'Controle',
-                  'radar_tlx_controle.png')
+                  'asq_radar_controle.png')
 
-print("Gráficos de radar por grupo gerados com sucesso!")
+print("Gráficos de radar ASQ por grupo gerados com sucesso!")
